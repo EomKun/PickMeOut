@@ -52,11 +52,11 @@ class ApplyBoard extends Component {
                         <Form>
                             <Form.Group>
                                 <Form.Label>제목</Form.Label>
-                                <Form.Control ref={ref=>this._signup_email=ref} type="text" placeholder="글 제목" />
+                                <Form.Control ref={ref=>this._post_title=ref} type="text" placeholder="글 제목" />
                             </Form.Group>
-                            <Form.Group controlId="exampleForm.ControlSelect1">
+                            <Form.Group>
                                 <Form.Label>카테고리</Form.Label>
-                                <Form.Control as="select">
+                                <Form.Control as="select" ref={ref=>this._post_category=ref}>
                                     <option>보컬</option>
                                     <option>기타</option>
                                     <option>베이스</option>
@@ -66,7 +66,7 @@ class ApplyBoard extends Component {
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group>
-                                <Form.Control ref={ref=>this._signup_intro=ref} as="textarea" placeholder="글 내용" rows="5" />
+                                <Form.Control ref={ref=>this._post_content=ref} as="textarea" placeholder="글 내용" rows="5" />
                             </Form.Group>
                             <Form.Group>
                                 <Accordion>
