@@ -1,5 +1,7 @@
 const express = require("express");
+const session = require("express-session");
 const cors = require("cors");
+const sequelize = require("./models").sequelize;
 const app = express();
 
 const corsOptions = {
@@ -8,7 +10,9 @@ const corsOptions = {
 }
 app.use(cors(corsOptions));
 
-/* app.use(session({
+sequelize.sync();
+
+app.use(session({
     resave:false,
     saveUninitialized:true,
     secret:"타인은 지옥이다",
@@ -16,7 +20,7 @@ app.use(cors(corsOptions));
         httpOnly:true,
         secure:false
     }
-})); */
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

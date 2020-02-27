@@ -7,7 +7,7 @@ class VideoContainer extends Component {
         return (
             <Jumbotron className="mt-5 mx-5">
                 <Row>
-                    <Col><Holder className="mx-5 background-color:white" width="300px" height="300px" updateOnResize={true} /></Col>
+                    <Col><Holder className="mx-5 background-color:white" width="300px" height="300px" /></Col>
                     <Col>
                         <h1>기타리프장인</h1>
                         <p>

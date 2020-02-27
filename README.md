@@ -1222,4 +1222,260 @@
             ```
    
             
-
+   
+         4. client의 logout부분을 다음과 같이 수정
+   
+            ```react
+            //logout
+            logout = async () => {
+                try {
+                    const result = await axios.get("http://localhost:8080/member/logout", {})
+                    if(result.data.Bodymsg){
+                        this.setState({
+                            user_email: "",
+                            logined: false,
+                            page_status: "not_login"
+                        });
+                    }
+                }catch (err) {
+                    console.log(err);
+                }
+            }
+            ```
+   
+            하지만 새로고침을 하면 로그인이 풀려버린다
+   
+            **세션은 8080 port인 서버에 있지만, 새로고침은 react process인 3000번 port로 요청이 간다.  따라서 로그인 중이라는 증명할 것이  필요하다**
+   
+            
+   
+         5. jQuery, cookie를 사용하여 증명 할 수 있다
+   
+            1. `npm i jquery  jquery.cookie`로 설치
+   
+            2. `import $ from "jquery";`, `import { } from "jquery.cookie";`로 사용할 곳에 import
+   
+            3. 로그인 부분에서 `$.cookie("name", value);`로 cookie에 값을 저장 가능
+   
+            4. 로그아웃 부분에서 `$.removeCookie("name");로` cookie 삭제 가능
+   
+            5. cookie값의 여부로 새로고침(3000번 포트로 요청)해도 cookie 값으로 로그인 된 레이아웃을 유지하는 것이 가능하다.
+   
+               
+   
+         6. 여기서는 HTML5의 Web Storage를 이용하여 증명하도록 만들것이다
+   
+            * Web Storage란?
+   
+              1. Storage 방식
+   
+                 * localStorage
+                   * 로컬에 origin 별로 지속되는 스토리지
+                   * 시간제한이 없고 브라우저가 꺼져도 죽지 않는다
+                   * 값을 지우려면 직접 지워줘야한다
+                 * sessionStorage
+                   * 현재 세션 동안만 유지되는 스토리지
+                   * 보통 세션의 종료는 일반적으로 브라우저의 종료를 뜻한다
+                   * 그러나 sessionStorage에서 의미하는 세션은 가장 작은 단위인 탭단위를 의미한다
+                   * 탭마다 sessionStorage는 따로 배정되며 서로의 영역을 공유하지 않는다, 값을 침범할 수 도 없다
+   
+                 
+   
+              2. cookie와의 차이점
+   
+                 1. cookie
+   
+                    * 4KB의 데이터 저장 제한, 시간제한, 갯수제한 
+                    * requst와 response시에 모든 쿠키를 다 넘겨야 했는데 원래 비용이 큰 http통신에 더 큰 부하를 준다
+                    * 같은 쿠키는 도메인 내의 모든 페이지에 같이 전달 됨
+                    * HTTP 요청에 암호화 되지 않고 보내기 때문에 보안에 취약함
+                    * 쿠키는 사용자의 로컬에 텍스트로 저장 되어있어 쉽게 접근, 내용 확인이 가능함
+   
+                    
+   
+                 2. web storage
+   
+                    * ie는 10MB, 다른 브라우저는 5MB의 용량제한, 시간제한 x, 갯수제한 x
+                    * 서버로는 전달이 되지 않고 브라우져 로컬에만 저장
+                    * sessionStorage의 존재로 세션이 유지되는 동안만 필요한 데이터를 저장
+                    * javascript 객체 저장가능
+                    * sessionStorage사용 시 다른 탭과 데이터가 공유되지 않음
+                    * 공유할 데이터는 localStorage에 넣으면 됨
+                    * 이벤트 존재
+   
+                    
+   
+                 3. 사용해보자!
+   
+                    1. Navigation.jsx의 login 부분에 다음과 같이 추가
+   
+                       ```react
+                       // login
+                           login = async () => {
+                               //...
+                                   const result = await axios.post("http://localhost:8080/user/login", send_param);
+                                   if(result.data.resultCode) {
+                       /////////////////////////////////////////////////////////////
+                                       // localStorage에 login_email을 key로 email 값을 넣어줌
+                                       localStorage.setItem("login_email", this._login_email.value);
+                       /////////////////////////////////////////////////////////////
+                                       this.setState({
+                                           user_email: this._login_email.value,
+                                           logined: true,
+                                           page_status: "logined"
+                                       });
+                       
+                                       alert(result.data.msg);
+                                   } else {
+                                       //...
+                       ```
+   
+                       
+   
+                    2. logout 부분에 다음을 추가
+   
+                       ```react
+                       //logout
+                       logout = async () => {
+                           try {
+                               const result = await axios.get("http://localhost:8080/user/logout", {})
+                               if(result.data.msg){
+                       /////////////////////////////////////////////////////////////
+                                   // 빈 문자열로 설정
+                                   localStorage.setItem("login_email", "");        
+                       /////////////////////////////////////////////////////////////
+                                   this.setState({
+                                       user_email: "",
+                                       logined: false,
+                                       page_status: "not_login"
+                                   });    
+                               }
+                           }catch (err) {
+                               console.log(err);
+                           }
+                       }
+                       ```
+   
+                       
+   
+                    3. Navigation.jsx를 다음과 같이 수정
+   
+                       ```react
+                       //...
+                       
+                       class Navigation extends Component {
+                           state = {
+                               page_status: "not_login",
+                               signup_modal: false
+                           };
+                       
+                       //...
+                       
+                       // page 전환
+                       pageStatus = () => {
+                           let page_status = this.state.page_status;
+                       
+                           if((localStorage.getItem("login_email") !== "") && 
+                              (page_status === "not_login"))
+                               page_status = "logined";
+                       
+                           switch(page_status){
+                               case "not_login": 
+                                   return <NotLoginContainer />;
+                       
+                               case "logined":
+                                   return (
+                                       <div>
+                                           <VideoContainer />
+                                           <ApplyBoard />
+                                       </div>
+                                   );
+                       
+                               case "user_info":
+                                   return (
+                                       <UserInfo email={localStorage.getItem("login_email")} />
+                                   );
+                       
+                               default :
+                                   return <div>error</div>;
+                           }
+                       }
+                       
+                           render (){
+                               let login_form;
+                               if(localStorage.getItem("login_email") !== ""){
+                                   login_form = 
+                                   <div>
+                                       <Button onClick={this.user_info} variant="outline-default">{localStorage.getItem("login_email")}</Button>
+                                       <Button onClick={this.logout} variant="outline-default">로그아웃</Button>
+                                   </div>;
+                               } else {
+                                   login_form = 
+                                   <Form inline>
+                                       <FormControl type="text" ref={ref=>this._login_email=ref} placeholder="email" className="mr-sm-2" />
+                                       <FormControl type="password" ref={ref=>this._login_pw=ref} placeholder="password" className="mr-sm-2" />
+                                       <Button onClick={this.login} variant="outline-default">로그인</Button>
+                                       <Button onClick={() => this.signup_modal_status(true)} variant="outline-default">회원가입</Button>
+                                   </Form>;
+                               }
+                       
+                               const page = this.pageStatus();
+                       
+                               return (
+                                   <div>
+                                       <Navbar bg="light" variant="light">
+                                           <Navbar.Brand href="" className="mr-auto">LOGO</Navbar.Brand>
+                                           {login_form}
+                                       </Navbar>
+                                       {/* signup modal */}
+                                       <Modal show={this.state.signup_modal} onHide={() => this.signup_modal_status(false)}>
+                                           <Modal.Header closeButton>
+                                               <Modal.Title>회원가입</Modal.Title>
+                                           </Modal.Header>
+                                           <Modal.Body>
+                                               <Form>
+                                                   <Form.Group>
+                                                       <Form.Label>Email</Form.Label>
+                                                       <Form.Control ref={ref=>this._signup_email=ref} type="email" placeholder="name@example.com" />
+                                                   </Form.Group>
+                                                   <Form.Group>
+                                                       <Form.Label>Password</Form.Label>
+                                                       <Form.Control ref={ref=>this._signup_pw=ref} type="password" placeholder="password" />
+                                                   </Form.Group>
+                                                   <Form.Group>
+                                                       <Form.Label>Nickname</Form.Label>
+                                                       <Form.Control ref={ref=>this._signup_nickname=ref} type="text" placeholder="닉네임" />
+                                                   </Form.Group>
+                                                   <Form.Group>
+                                                       <Form.Label>소개글</Form.Label>
+                                                       <Form.Control ref={ref=>this._signup_intro=ref} as="textarea" rows="5" />
+                                                   </Form.Group>
+                                               </Form>
+                                           </Modal.Body>
+                                           <Modal.Footer>
+                                               <Button variant="primary" onClick={this.signup}>
+                                               가입
+                                               </Button>
+                                               <Button variant="secondary" onClick={() => this.signup_modal_status(false)}>
+                                                   취소
+                                               </Button>
+                                           </Modal.Footer>
+                                       </Modal>
+                                       {page}
+                                   </div>
+                               );
+                           }
+                       }
+                       
+                       export default Navigation;
+                       ```
+   
+                       * 결과 화면
+   
+                       ![logined_new](https://user-images.githubusercontent.com/20276476/75322076-772d3e00-58b5-11ea-81a9-19e45500abcd.png)
+   
+                       새로고침을 해도 로그인 된 상태라면 메인 화면이 나온다
+   
+         
+   
+      9. 
