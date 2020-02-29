@@ -1,10 +1,53 @@
 import React, { Component } from "react";
-import { Container, Nav, Button, Modal, Form, Card, Accordion } from "react-bootstrap";
+import { Container, Nav, Button, Modal, Form, Table, Row, Badge} from "react-bootstrap";
+import axios from "axios";
 
 class ApplyBoard extends Component {
     state = {
-        post_modal: false
+        post_modal: false,
+        posts: []
     };
+
+    // render후 호출
+    componentDidMount = () => {
+        this.loadPosts("");
+    }
+
+    // 글 불러오기
+    loadPosts = async (category) => {
+        try {
+            const post_result = await axios.post("http://localhost:8080/board", { category });
+            if(post_result){
+                console.log(post_result.data.posts);
+                this.setState({
+                    posts: post_result.data.posts
+                });
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    // 글 등록
+    post_register = async () => {
+        const formData = new FormData();
+        formData.append("title", this._post_title.value);
+        formData.append("category", this._post_category.value);
+        formData.append("content", this._post_content.value);
+        formData.append("upload_file", this._post_file.files[0]);
+
+        try {
+            const result = await axios.post("http://localhost:8080/post/register", formData)
+            if(result.data.msg) {
+                alert("글 등록 완료");
+                this.setState({
+                    post_modal: false
+                });
+            }
+        }catch (err) {
+            console.log(err);
+        }
+    }
 
     // post modal status
     post_modal_status = (status) => {
@@ -14,33 +57,54 @@ class ApplyBoard extends Component {
     }
 
     render (){
+        const registerBtn_style = {
+            textAlign: "right",
+            margin: "1vw 0"
+        }
+
+        let post_data = this.state.posts.length === 0?
+                    <tr><td colSpan="5">게시글이 없습니다.</td></tr>:
+                    this.state.posts.map((post) => {
+                        return (
+                            <tr key={post.id}>
+                                <td>{post.category}</td>
+                                <td>{post.title}</td>
+                                <td><Badge variant="primary">구인 중</Badge></td>
+                                <td>{post.nickname}</td>
+                                <td>{post.createdAt}</td>
+                            </tr>
+                        );
+                    });
+
         return (
             <div>
                 <Container fluid>
-                    <Button onClick={() => this.post_modal_status(true)} variant="light" className="ml-5 my-3">글 작성</Button>
-                    <Nav justify variant="tabs" defaultActiveKey="/home" className="mx-5">
-                        <Nav.Item>
-                            <Nav.Link href="/home">전체</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-1">보컬</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-2">기타</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-3">베이스</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-4">키보드</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-5">드럼</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="link-6">Etc.</Nav.Link>
-                        </Nav.Item>
+                    <div style={registerBtn_style}><Button  onClick={() => this.post_modal_status(true)} className="mr-5" variant="light">글 작성</Button></div>
+                    <Nav justify variant="tabs" defaultActiveKey="whole" className="mx-5 mb-5">
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("")} eventKey="whole">전체</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("보컬")} eventKey="vocal">보컬</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("기타")} eventKey="guitar">기타</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("베이스")} eventKey="bass">베이스</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("키보드")} eventKey="keyboard">키보드</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("드럼")} eventKey="drum">드럼</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("Etc.")} eventKey="etc">Etc.</Nav.Link></Nav.Item>
                     </Nav>
+                    <Row>
+                        <Table hover className="mx-5 text-center">
+                            <thead>
+                                <tr>
+                                    <th>카테고리</th>
+                                    <th>제목</th>
+                                    <th>상태</th>
+                                    <th>작성자</th>
+                                    <th>작성일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {post_data}
+                            </tbody>
+                        </Table>
+                    </Row>
                 </Container>
 
                 {/* post modal */}
@@ -69,37 +133,12 @@ class ApplyBoard extends Component {
                                 <Form.Control ref={ref=>this._post_content=ref} as="textarea" placeholder="글 내용" rows="5" />
                             </Form.Group>
                             <Form.Group>
-                                <Accordion>
-                                    <Card>
-                                        <Card.Header>
-                                        <Accordion.Toggle as={Card.Header} eventKey="0">
-                                            영상 직접 업로드
-                                        </Accordion.Toggle>
-                                        </Card.Header>
-                                        <Accordion.Collapse eventKey="0">
-                                        <Card.Body>
-                                            <Form.Control type="file" placeholder="영상 업로드" />
-                                        </Card.Body>
-                                        </Accordion.Collapse>
-                                    </Card>
-                                    <Card>
-                                        <Card.Header>
-                                        <Accordion.Toggle as={Card.Header} eventKey="1">
-                                            유투브 링크 업로드
-                                        </Accordion.Toggle>
-                                        </Card.Header>
-                                        <Accordion.Collapse eventKey="1">
-                                        <Card.Body>
-                                            <Form.Control ref={ref=>this._youtube_link=ref} type="input" placeholder="영상 업로드" />
-                                        </Card.Body>
-                                        </Accordion.Collapse>
-                                    </Card>
-                                </Accordion>
+                            <Form.Control type="file" ref={ref=>this._post_file=ref} name="upload_file" placeholder="Upload" />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="primary" onClick={this.upload}>
+                        <Button variant="primary" onClick={this.post_register}>
                             등록
                         </Button>
                         <Button variant="secondary" onClick={() => this.post_modal_status(false)}>

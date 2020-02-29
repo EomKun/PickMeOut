@@ -1195,13 +1195,22 @@
                 let msg = "";
                 let resultCode;
             
+                // Users에서 정보를 찾고
                 const search_result = await Users.findOne({ where : { email }});
                 if(search_result) {
+                    // UserInfo에서 닉네임만 찾아옴
+                    const nickname_result = await UserInfo.findOne({ 
+                        where : { id: search_result.userinfo_id },
+                        attributes: ['nickname']
+                    });
                     resultCode = 1;
-            ///////////////////////////////////////////////////////////////////////////
-                    req.session.id = search_result.id;
+                    
+                    ///////////////////////////////////////////////////////////////
+                    req.session.u_id = search_result.id;
                     req.session.email = search_result.email;
-            ///////////////////////////////////////////////////////////////////////////
+                    req.session.nickname = nickname_result.nickname;
+                    ///////////////////////////////////////////////////////////////
+                    
                     msg = `${search_result.email}님 환영합니다!`;
                 } else {
                     resultCode = 0;
@@ -1478,4 +1487,637 @@
    
          
    
-      9. 
+      9. 글쓰기 기능을 만들자
+   
+         1. ApplyBoard.jsx를 다음과 같이 수정
+   
+            ```react
+            import React, { Component } from "react";
+            import { Container, Nav, Button, Modal, Form, } from "react-bootstrap";
+            
+            class ApplyBoard extends Component {
+                // modal창을 위한 state
+                state = {
+                    post_modal: false
+                };
+            
+                // post modal status
+                post_modal_status = (status) => {
+                    this.setState({
+                        post_modal: status
+                    });
+                }
+            
+                render (){
+                    return (
+                        <div>
+                            <Container fluid>
+                                <Button onClick={() => this.post_modal_status(true)} variant="light" className="ml-5 my-3">글 작성</Button>
+                                <Nav justify variant="tabs" defaultActiveKey="/home" className="mx-5">
+                                    <Nav.Item>
+                                        <Nav.Link href="/home">전체</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-1">보컬</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-2">기타</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-3">베이스</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-4">키보드</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-5">드럼</Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="link-6">Etc.</Nav.Link>
+                                    </Nav.Item>
+                                </Nav>
+                            </Container>
+            
+                            {/* post modal */}
+                            <Modal show={this.state.post_modal} onHide={() => this.post_modal_status(false)}>
+                                <Modal.Header closeButton>
+                                    <Modal.Title>구인 글 작성</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <Form>
+                                        <Form.Group>
+                                            <Form.Label>제목</Form.Label>
+                                            <Form.Control ref={ref=>this._post_title=ref} type="text" placeholder="글 제목" />
+                                        </Form.Group>
+                                        <Form.Group>
+                                            <Form.Label>카테고리</Form.Label>
+                                            <Form.Control as="select" ref={ref=>this._post_category=ref}>
+                                                <option>보컬</option>
+                                                <option>기타</option>
+                                                <option>베이스</option>
+                                                <option>키보드</option>
+                                                <option>드럼</option>
+                                                <option>Etc.</option>
+                                            </Form.Control>
+                                        </Form.Group>
+                                        <Form.Group>
+                                            <Form.Control ref={ref=>this._post_content=ref} as="textarea" placeholder="글 내용" rows="5" />
+                                        </Form.Group>
+                                        <Form.Group>
+                                        <Form.Control type="file" placeholder="Upload" />
+                                        </Form.Group>
+                                    </Form>
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <Button variant="primary" onClick={this.upload}>
+                                        등록
+                                    </Button>
+                                    <Button variant="secondary" onClick={() => this.post_modal_status(false)}>
+                                        취소
+                                    </Button>
+                                </Modal.Footer>
+                            </Modal>
+                        </div>
+                    );
+                }
+            }
+            
+            export default ApplyBoard;
+            ```
+   
+            * 결과화면
+   
+              ![image-20200228150539922](C:\Users\EomJaewoong\AppData\Roaming\Typora\typora-user-images\image-20200228150539922.png)
+   
+            
+   
+         2. 작성한 내용이 나오는지 확인 -> ApplyBoard.jsx에 다음을 추가
+   
+            ```React
+            //...
+            class ApplyBoard extends Component {
+                //...
+            
+                post_register = () => {
+                    const title = this._post_title.value;
+                    const category = this._post_category.value;
+                    const content = this._post_content.value;
+                    const file = this._post_file.value;
+            
+                    console.log(title, category, content, file);
+                }
+            
+                //...
+            
+                render (){
+                    return (
+                        //...
+                                    <Button variant="primary" onClick={this.post_register}>
+                                        등록
+                                    </Button>
+                                    //...
+                    );
+                }
+            }
+            
+            export default ApplyBoard;
+            ```
+   
+            * 결과화면
+   
+              ![post_content](https://user-images.githubusercontent.com/20276476/75515208-ce114f80-5a3c-11ea-973d-453e08d3aca5.png)
+   
+            
+   
+         3. 파일을 올리고 정보들이 DB에 저장되도록 하자
+   
+            1. 서버 가동을 중단하고 `npm i multer`를 입력하여 설치한다
+   
+               
+   
+            2. client의 ApplyBoard.jsx에 post_register를 추가
+   
+               ```react
+               //...
+               
+               class ApplyBoard extends Component {
+                   //...
+               
+                   post_register = async () => {
+                       const formData = new FormData();
+                       formData.append("title", this._post_title.value);
+                       formData.append("category", this._post_category.value);
+                       formData.append("content", this._post_content.value);
+                       formData.append("upload_file", this._post_file.files[0]);
+               
+                       try {
+                           const result = await axios.post("http://localhost:8080/post/register", formData)
+                           if(result.data.msg) {
+                               alert("글 등록 완료");
+                               this.setState({
+                                   post_modal: false
+                               });
+                           }
+                       }catch (err) {
+                           console.log(err);
+                       }
+                   }
+               
+                   //...
+               ```
+   
+               
+   
+            3. post.js파일을 routes에 만들고 다음과 같이 작성
+   
+               ```javascript
+               const express = require("express");
+               const multer = require("multer");
+               const path = require("path");
+               const Posts = require('../models').PostApply;
+               const router = express.Router();
+               
+               const storage = multer.diskStorage({
+                   // file destination 수정
+                   destination: function(req, file ,callback){
+                       callback(null, "upload_video")
+                   },
+                   // 저장 될 파일 이름 설정
+                   filename: function(req, file, callback){
+                       let extension = path.extname(file.originalname);
+                       let basename = path.basename(file.originalname, extension);
+                       let date_now = new Date();
+                       let d_Month = date_now.getMonth() + 1;
+                       d_Month = (parseInt(d_Month / 10, 10) == 0) ? "0" + d_Month : d_Month;
+                       const d_Day = (parseInt(date_now.getDate() / 10, 10) == 1) ? "0" + date_now.getDate() : date_now.getDate();
+               
+                       callback(null, basename + "_" + date_now.getFullYear() + d_Month + d_Day + "_"
+                        + date_now.getHours() + date_now.getMinutes() + date_now.getSeconds() + extension);
+                   }
+               })
+               
+               // multer 미들웨어 경로 등록
+               const upload = multer({ storage });
+               
+               // post register
+               router.post("/register", upload.single("upload_file"), async (req, res) => {
+                   const title = req.body.title;
+                   const content = req.body.content;
+                   const category = req.body.category;
+                   const video_link = req.file.path;	// 파일의 경로를 db에 넣을거임
+                   const userId = req.session.u_id;
+                   
+                   try {
+                       const insert_result = await Posts.create({
+                           title,
+                           content,
+                           category,
+                           video_link,
+                           userId
+                       });
+               
+                       res.json({ msg: true });
+                   } catch (err) {
+                       res.json({ msg: false });
+                       console.log(err);
+                   }
+               
+                   res.json({msg: false});
+               });
+               
+               module.exports = router;
+               ```
+   
+               * 결과화면
+   
+                 ![post_register2](https://user-images.githubusercontent.com/20276476/75602973-90302c00-5b0d-11ea-9e85-908ad85c07c0.png)
+   
+                 등록 버튼을 누르면 알람이 뜨고 글이 등록되며, modal창이 닫힌다
+   
+                 ![register_db](https://user-images.githubusercontent.com/20276476/75602993-ca99c900-5b0d-11ea-8bdc-20f4b913c881.png)
+   
+                 db에 등록됨
+   
+                 ![register_file](https://user-images.githubusercontent.com/20276476/75603029-f5841d00-5b0d-11ea-9640-cde2c2b94a53.png)
+   
+                 서버에 파일도 전송이 완료된다
+   
+         
+   
+      10. 내 정보 페이지를 만들기
+   
+          1. Client의 UserInfo.jsx를 다음과 같이 수정
+   
+             ```react
+             import React, { Component } from "react";
+             import { Container, Jumbotron, Row, Col, Table, Badge } from "react-bootstrap";
+             import Holder from 'react-holder-component';
+             import axios from "axios";
+             
+             class UserInfo extends Component {
+                 state = {
+                     nickname: "",
+                     intro: "",
+                     posts: [],
+                 };
+             
+                 // 나의 유저 정보와 내가 쓴 글 불러오기
+                 componentDidMount = async () => {
+                     try {
+                         const result = await axios.get("http://localhost:8080/user/userinfo");
+                         if(result.data.resultCode) {
+                             console.log(result.data.nickname);
+                             console.log(result.data.posts);
+                             // nickname, 소개글, 내가 쓴 글 설정
+                             this.setState({
+                                 nickname: result.data.nickname,
+                                 intro: result.data.intro,
+                                 posts: result.data.posts
+                             });
+                         } else {
+                             console.log("");
+                         }
+                     }catch (err) {
+                         console.log(err);
+                     }
+                 }
+             
+                 render (){
+                     // 게시글 태그 객체로 만들어 render되게 만들기
+                     let post_list = this.state.posts.map((post) => {
+                         return (
+                             <tr>
+                                 <td>{post.category}</td>
+                                 <td>{post.title}</td>
+                                 <td><Badge variant="primary">구인 중</Badge></td>
+                                 <td>{post.createdAt}</td>
+                             </tr>
+                         );
+                     });
+             
+                     return (
+                         <Container>
+                             <Jumbotron className="my-5">
+                                 <Row>
+                                     <Col><Holder className="mx-5 background-color:white" width="300px" height="300px" />{this.props.email}의 프로필사진</Col>
+                                     <Col>
+                                         <h1>{this.state.nickname}</h1>
+                                         <p>{this.state.intro}</p>
+                                     </Col>
+                                 </Row>
+                             </Jumbotron>
+                             <Table hover>
+                                 <thead>
+                                     <tr>
+                                         <th>카테고리</th>
+                                         <th>제목</th>
+                                         <th>상태</th>
+                                         <th>작성일</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {post_list}
+                                 </tbody>
+                             </Table>
+                         </Container>
+                     );
+                 }
+             }
+             
+             export default UserInfo;
+             ```
+   
+             
+   
+          2. server부분의 user.js에 다음을 추가
+   
+             ```javascript
+             //...
+             // userinfo process
+             router.get("/userinfo", async (req, res, next) => {
+                 try{
+                     const id = req.session.u_id;
+                     let msg;
+             
+                     await models.sequelize.transaction (async (t) => {
+                         // 1. Users -> userinfo_id 조회
+                         const user_result = await Users.findOne({ where : { id }});
+                         if(user_result)
+                         {
+                             // 2. UserInfo 조회
+                             const userinfo_result = await UserInfo.findOne({ where : { id: user_result.userinfo_id }});
+                             
+                             // 3. User가 쓴 글 조회
+                             const post_result = await Posts.findAll({ where : { userId: id }});
+             
+                             res.json({ 
+                                 resultCode: true,
+                                 nickname: userinfo_result.nickname,
+                                 intro: userinfo_result.intro_content,
+                                 posts: post_result,
+                             });
+                         }
+                     });
+                 } catch (err) {
+                     console.log(err);
+                 }
+             });
+             //...
+             ```
+   
+             * 결과화면
+   
+               ![userinfo](https://user-images.githubusercontent.com/20276476/75607191-b66ac180-5b37-11ea-94af-20df61d0a064.png)
+   
+          
+   
+      11. 메인 화면에서도 게시글이 나오도록 하자
+   
+          1. Client의 ApplyBoard.jsx에 다음을 추가
+   
+             ```react
+             import React, { Component } from "react";
+             import { Container, Nav, Button, Modal, Form, Table, Row, Badge} from "react-bootstrap";
+             import axios from "axios";
+             
+             class ApplyBoard extends Component {
+                 state = {
+                     post_modal: false,
+                     posts: []
+                 };
+             
+                  // render후 호출
+                 componentDidMount = () => {
+                     this.loadPosts("");
+                 }
+             
+                 // 글 불러오기
+                 loadPosts = async (category) => {
+                     try {
+                         const post_result = await axios.post("http://localhost:8080/board", {});
+                         if(post_result){
+                             console.log(post_result.data.posts);
+                             this.setState({
+                                 posts: post_result.data.posts
+                             });
+                         }
+                     } catch (err) {
+                         console.log(err);
+                     }
+                 }
+                 
+             //...
+             
+                 render (){
+                     const registerBtn_style = {
+                         textAlign: "right",
+                         margin: "1vw 0"
+                     }
+             
+                     // 게시글이 없으면 없다고 보여줌, 있으면 게시글들을 보여줌
+                     const post_data = this.state.posts.length === 0?
+                                 <tr><td colspan="5">게시글이 없습니다.</td></tr>:
+                                 this.state.posts.map((post) => {
+                                     return (
+                                         <tr>
+                                             <td>{post.category}</td>
+                                             <td>{post.title}</td>
+                                             <td><Badge variant="primary">구인 중</Badge></td>
+                                             <td>{post.nickname}</td>
+                                             <td>{post.createdAt}</td>
+                                         </tr>
+                                     );
+                                 });
+             
+                     return (
+                         <div>
+                             <Container fluid>
+                                 <div style={registerBtn_style}><Button  onClick={() => this.post_modal_status(true)} className="mr-5" variant="light">글 작성</Button></div>
+                                 <Nav justify variant="tabs" defaultActiveKey="whole" className="mx-5 mb-5">
+                                     <Nav.Item><Nav.Link eventKey="whole">전체</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="vocal">보컬</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="guitar">기타</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="bass">베이스</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="keyboard">키보드</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="drum">드럼</Nav.Link></Nav.Item>
+                                     <Nav.Item><Nav.Link eventKey="etc">Etc.</Nav.Link></Nav.Item>
+                                 </Nav>
+                                 <Row>
+                                     <Table hover className="mx-5 text-center">
+                                         <thead>
+                                             <tr>
+                                                 <th>카테고리</th>
+                                                 <th>제목</th>
+                                                 <th>상태</th>
+                                                 <th>작성자</th>
+                                                 <th>작성일</th>
+                                             </tr>
+                                         </thead>
+                                         <tbody>
+                                             {post_data}
+                                         </tbody>
+                                     </Table>
+                                 </Row>
+                             </Container>
+             //...
+             ```
+   
+             
+   
+          2. Server의 routes폴더에 index.js를 만든 후 다음과 같이 작성
+   
+             ```javascript
+             const express = require("express");
+             const Users = require('../models').Users;
+             const UserInfo = require('../models').UserInfo;
+             const Posts = require('../models').PostApply;
+             const router = express.Router();
+             
+             router.post("/board", async (req, res, next) => {
+                 try {
+                     const result = await Posts.findAll({ order: [["createdAt", "DESC"]] });
+                     
+                     res.json({ posts: result });
+                 } catch (err) {
+                     console.log(err);
+                     res.json({ posts: false });
+                 }
+             });
+             
+             module.exports = router;
+             ```
+   
+             
+   
+          3. server.js에 다음을 추가
+   
+             ```javascript
+             //...
+             
+             // routers
+             app.use("/", require("./routes/index"));	// 이거
+             app.use("/user", require("./routes/user"));
+             app.use("/post", require("./routes/post"));
+             
+             //...
+             ```
+   
+             * 결과 화면
+   
+               ![main_board_nothing](https://user-images.githubusercontent.com/20276476/75610964-6866b580-5b59-11ea-96f7-eb904b349062.png)
+   
+               게시글이 없을 때
+   
+               ![main_board_something](https://user-images.githubusercontent.com/20276476/75611040-0b1f3400-5b5a-11ea-969f-28ce2c22dec9.png)
+   
+               게시글이 존재 할 때
+   
+             
+   
+          4. 카테고리별로 글이 나오도록 만들어보자
+   
+             1. Client의 ApplyBoard.jsx다음 부분을 변경
+   
+                ```react
+                import React, { Component } from "react";
+                import { Container, Nav, Button, Modal, Form, Table, Row, Badge} from "react-bootstrap";
+                import axios from "axios";
+                
+                class ApplyBoard extends Component {
+                    state = {
+                        post_modal: false,
+                        posts: []
+                    };
+                
+                    // render후 호출
+                    componentDidMount = () => {
+                        this.loadPosts("");
+                    }
+                
+                    // 글 불러오기
+                    loadPosts = async (category) => {
+                        try {
+                            const post_result = await axios.post("http://localhost:8080/board", { category });
+                            if(post_result){
+                                console.log(post_result.data.posts);
+                                this.setState({
+                                    posts: post_result.data.posts
+                                });
+                            }
+                        } catch (err) {
+                            console.log(err);
+                        }
+                    }
+                
+                  //...
+                    render (){
+                        const registerBtn_style = {
+                            textAlign: "right",
+                            margin: "1vw 0"
+                        }
+                
+                        let post_data = this.state.posts.length === 0?
+                                    <tr><td colSpan="5">게시글이 없습니다.</td></tr>:
+                                    this.state.posts.map((post) => {
+                                        return (
+                                            <tr key={post.id}>
+                                                <td>{post.category}</td>
+                                                <td>{post.title}</td>
+                                                <td><Badge variant="primary">구인 중</Badge></td>
+                                                <td>{post.nickname}</td>
+                                                <td>{post.createdAt}</td>
+                                            </tr>
+                                        );
+                                    });
+                
+                        return (
+                            <div>
+                                <Container fluid>
+                                    <div style={registerBtn_style}><Button  onClick={() => this.post_modal_status(true)} className="mr-5" variant="light">글 작성</Button></div>
+                                    <Nav justify variant="tabs" defaultActiveKey="whole" className="mx-5 mb-5">
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("")} eventKey="whole">전체</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("보컬")} eventKey="vocal">보컬</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("기타")} eventKey="guitar">기타</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("베이스")} eventKey="bass">베이스</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("키보드")} eventKey="keyboard">키보드</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("드럼")} eventKey="drum">드럼</Nav.Link></Nav.Item>
+                                        <Nav.Item><Nav.Link onClick={() => this.loadPosts("Etc.")} eventKey="etc">Etc.</Nav.Link></Nav.Item>
+                                    </Nav>
+                //...
+                ```
+   
+                
+   
+             2. server부분의 routes/index.js의 글 요청 부분을 다음과 같이 변경
+   
+                ```javascript
+                router.post("/board", async (req, res, next) => {
+                    try {
+                        // 카테고리별로 글을 요청
+                        // 글이 많아질 수록 성능에 문제가 있을거 같다(라고 혼자 추측)
+                        ///////////////////////////////////////////////////////////
+                        const result = req.body.category === ""? 
+                            await Posts.findAll({ order: [["createdAt", "DESC"]] }) :
+                            await Posts.findAll({ 
+                                where: { category: req.body.category },
+                                order: [["createdAt", "DESC"]]
+                            });
+                        ///////////////////////////////////////////////////////////
+                        
+                        res.json({ posts: result });
+                    } catch (err) {
+                        console.log(err);
+                        res.json({ posts: false });
+                    }
+                });
+                ```
+   
+                * 결과 화면
+   
+                  ![main_board_whole](https://user-images.githubusercontent.com/20276476/75611127-0a3ad200-5b5b-11ea-8063-024001f37f56.png)
+   
+                  전체 글이 보이는 화면
+   
+                  ![main_board_keyboard](https://user-images.githubusercontent.com/20276476/75611144-2b032780-5b5b-11ea-90c3-546ce29cdb8d.png)
+   
+                  특정 탭을 클릭하면 해당 카테고리의 글만 나온다

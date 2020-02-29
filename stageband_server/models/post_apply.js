@@ -14,6 +14,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(45),
       allowNull: false
     },
+    nickname: {
+      type: DataTypes.STRING(45),
+      allowNull: false
+    },
     video_link: {
       type: DataTypes.STRING(100),
       allowNull: false

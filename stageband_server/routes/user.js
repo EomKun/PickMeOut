@@ -2,44 +2,38 @@ const express = require("express");
 const models = require("../models");
 const Users = require('../models').Users;
 const UserInfo = require('../models').UserInfo;
+const Posts = require('../models').PostApply;
 const router = express.Router();
 
-// info process
-/* router.post("/info", (req, res, next) => {
+// userinfo process
+router.get("/userinfo", async (req, res, next) => {
     try{
+        const id = req.session.u_id;
+        let msg;
+
         await models.sequelize.transaction (async (t) => {
             // 1. Users -> userinfo_id 조회
-            const search_result1 = await Users.findOne({ where : { id }});
-            console.log(search_result);
-            if(!search_result)
+            const user_result = await Users.findOne({ where : { id }});
+            if(user_result)
             {
-                // 2. User table insert
-                const insert_result1 = await Users.create({
-                    email,
-                    password,
-                });
+                // 2. UserInfo 조회
+                const userinfo_result = await UserInfo.findOne({ where : { id: user_result.userinfo_id }});
+                
+                // 3. User가 쓴 글 조회
+                const post_result = await Posts.findAll({ where : { userId: id }});
 
-                console.log(insert_result1);
-                if(insert_result1){
-                    // 3. UserInfo table insert 
-                    const insert_result2 = await UserInfo.create({
-                        nickname,
-                        intro_content,
-                        profile_photo_link: "path"
-                    });
-                } else {
-                    resultCode = 0;
-                    msg = "넣는데 문제생김"
-                }
-            } else {
-                resultCode = 0;
-                msg = "이메일 중복";
+                res.json({ 
+                    resultCode: true,
+                    nickname: userinfo_result.nickname,
+                    intro: userinfo_result.intro_content,
+                    posts: post_result,
+                });
             }
         });
     } catch (err) {
         console.log(err);
     }
-}); */
+});
 
 // signup process
 router.post("/signup", async (req, res, next) => {
@@ -58,18 +52,19 @@ router.post("/signup", async (req, res, next) => {
             const search_result = await Users.findOne({ where : { email }});
             if(!search_result)
             {
-                // 2. User table insert
-                const insert_result1 = await Users.create({
-                    email,
-                    password,
+                // 2. UserInfo table insert 
+                const userinfo_insert_result = await UserInfo.create({
+                    nickname,
+                    intro_content,
+                    profile_photo_link: "path"
                 });
-                
-                if(insert_result1){
-                    // 3. UserInfo table insert 
-                    const insert_result2 = await UserInfo.create({
-                        nickname,
-                        intro_content,
-                        profile_photo_link: "path"
+
+                if(userinfo_insert_result){
+                    // 3. User table insert
+                    const user_insert_result = await Users.create({
+                        email,
+                        password,
+                        userinfo_id: userinfo_insert_result.id
                     });
                 } else {
                     resultCode = 0;
@@ -81,7 +76,7 @@ router.post("/signup", async (req, res, next) => {
             }
         });
         
-        res.json({ resultCode, msg });
+        res.json({ resultCode, msg: "회원가입이 완료되었습니다" });
     } catch (err) {
         resultCode = 0;
         res.json({ resultCode, msg: false });
@@ -99,11 +94,16 @@ router.post("/login", async (req, res, next) => {
 
     const search_result = await Users.findOne({ where : { email }});
     if(search_result) {
+        const nickname_result = await UserInfo.findOne({ 
+            where : { id: search_result.userinfo_id },
+            attributes: ['nickname']
+        });
         resultCode = 1;
         
-        req.session.id = search_result.id;
+        req.session.u_id = search_result.id;
         req.session.email = search_result.email;
-
+        req.session.nickname = nickname_result.nickname;
+        
         msg = `${search_result.email}님 환영합니다!`;
     } else {
         resultCode = 0;

@@ -68,8 +68,6 @@ class Navigation extends Component {
                 localStorage.setItem("login_email", "");        
 
                 this.setState({
-                    user_email: "",
-                    logined: false,
                     page_status: "not_login"
                 });    
             }
@@ -141,8 +139,6 @@ class Navigation extends Component {
     }
 
     render (){
-        console.log(localStorage.getItem("login_email"));
-
         let login_form;
         if(localStorage.getItem("login_email") !== ""){
             login_form = 
