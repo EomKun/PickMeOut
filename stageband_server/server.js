@@ -22,6 +22,7 @@ app.use(session({
     }
 }));
 
+app.use('/upload_video', express.static('upload_video'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 

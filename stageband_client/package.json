@@ -13,6 +13,7 @@
     "react-dom": "^16.12.0",
     "react-holder": "^1.0.0",
     "react-holder-component": "^1.0.5",
+    "react-html5video": "^2.5.1",
     "react-scripts": "3.4.0"
   },
   "scripts": {

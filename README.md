@@ -2121,3 +2121,111 @@
                   ![main_board_keyboard](https://user-images.githubusercontent.com/20276476/75611144-2b032780-5b5b-11ea-90c3-546ce29cdb8d.png)
    
                   특정 탭을 클릭하면 해당 카테고리의 글만 나온다
+             
+             
+             
+          5. 위쪽의 인기게시글(이라고 지금은 생각하자)을 보여주는 공간도 나오도록 만들어보자
+          
+             1. client의 터미널에서 `npm i react-html5video`를 입력하여 설치
+          
+                
+          
+             2. Client의 VideoContainer.jsx부분을 다음과 같이 수정
+          
+                ```react
+                import React, { Component } from "react";
+                import { Jumbotron, Col, Row } from "react-bootstrap";
+                //////////////////////////////////////////////////////////////////
+                import { DefaultPlayer as Video } from 'react-html5video';
+                import 'react-html5video/dist/styles.css';
+                //////////////////////////////////////////////////////////////////
+                import axios from "axios";
+                
+                class VideoContainer extends Component {
+                    state = {
+                        title: "",
+                        content: "",
+                        category: "",
+                        nickname: "",
+                        createdAt: "",
+                        video_link: "",
+                    };
+                
+                	// 게시글 정보에 대한 요청
+                    componentDidMount = async () => {
+                        const post_result = await axios.get("http://localhost:8080/videopost");
+                        if(post_result.data) {
+                            this.setState({
+                                title: post_result.data.title,
+                                content: post_result.data.content,
+                                category: post_result.data.category,
+                                nickname: post_result.data.nickname,
+                                video_link: "http://localhost:8080/upload_video/" + post_result.data.file_name,
+                                createdAt: post_result.data.createAt,
+                            });
+                        }
+                    }
+                
+                    render (){      
+                        // 비디오 링크에 대한 정적 파일 요청
+                        let src = this.state.video_link !== ""? <source src={this.state.video_link} type="video/mp4" /> :
+                        <div>비디오</div>
+                
+                        return (
+                            <Jumbotron className="mt-5 mx-5">
+                                <Row>
+                                    <Col>
+                                    <Video autoPlay loop
+                                        controls={['PlayPause', 'Seek', 'Time', 'Volume', 'Fullscreen']}
+                                        onCanPlayThrough={() => {
+                                            // Do stuff
+                                        }}>
+                                        {src}
+                                    </Video>
+                                    </Col>
+                                    <Col>
+                                        <h1 className="mb-5">{this.state.title}<small> - {this.state.nickname}</small></h1>
+                                        <p>{this.state.category}</p>
+                                        <p>{this.state.createdAt}</p>
+                                        <p>{this.state.content}</p>
+                                    </Col>
+                                </Row>
+                            </Jumbotron>
+                        );
+                    }
+                }
+                
+                export default VideoContainer;
+                ```
+          
+                
+          
+             3. server부분의 index.js에 다음을 추가
+          
+                ```javascript
+                // 인기 게시물 전달
+                router.get("/videopost", async (req, res, next) => {
+                    try{
+                        // 일단은 가장 최근 게시물을 가져오도록 함
+                        const result = await Posts.findOne({ order: [["createdAt", "DESC"]] });
+                        res.json({ 
+                            id: result.id,
+                            title: result.title,
+                            content: result.content,
+                            category: result.category,
+                            nickname: result.nickname,
+                            createdAt: result.createdAt,
+                            file_name: result.file_name,
+                        });
+                    } catch (err) {
+                        console.log(err);
+                        res.json({ post: false });
+                    }
+                });
+                ```
+          
+                * 결과화면
+          
+                  ![video_main](https://user-images.githubusercontent.com/20276476/75624620-65bb9d00-5bf9-11ea-99c3-b90553f23cbd.png)
+          
+                  영상이 잘 재생되고 게시글 정보가 화면에 뜬다

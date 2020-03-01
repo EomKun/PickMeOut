@@ -18,7 +18,6 @@ class ApplyBoard extends Component {
         try {
             const post_result = await axios.post("http://localhost:8080/board", { category });
             if(post_result){
-                console.log(post_result.data.posts);
                 this.setState({
                     posts: post_result.data.posts
                 });

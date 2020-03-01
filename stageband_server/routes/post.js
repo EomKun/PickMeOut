@@ -32,7 +32,7 @@ router.post("/register", upload.single("upload_file"), async (req, res) => {
     const content = req.body.content;
     const category = req.body.category;
     const nickname = req.session.nickname;
-    const video_link = req.file.path;
+    const file_name = req.file.filename;
     const userId = req.session.u_id;
     
     try {
@@ -41,7 +41,7 @@ router.post("/register", upload.single("upload_file"), async (req, res) => {
             content,
             category,
             nickname,
-            video_link,
+            file_name,
             userId
         });
 

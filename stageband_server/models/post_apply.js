@@ -18,7 +18,7 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(45),
       allowNull: false
     },
-    video_link: {
+    file_name: {
       type: DataTypes.STRING(100),
       allowNull: false
     }
