@@ -8,6 +8,16 @@ class ApplyBoard extends Component {
         posts: []
     };
 
+    // 게시 글 클릭
+    selectPost = (key) => {
+        const targetPost = this.state.posts.find((post) => {
+            return post.id === key;
+        });
+
+        alert(targetPost.id);
+        console.log(targetPost);
+    }
+
     // render후 호출
     componentDidMount = () => {
         this.loadPosts("");
@@ -65,7 +75,7 @@ class ApplyBoard extends Component {
                     <tr><td colSpan="5">게시글이 없습니다.</td></tr>:
                     this.state.posts.map((post) => {
                         return (
-                            <tr key={post.id}>
+                            <tr onClick={() => this.selectPost(post.id)} key={post.id}>
                                 <td>{post.category}</td>
                                 <td>{post.title}</td>
                                 <td><Badge variant="primary">구인 중</Badge></td>
