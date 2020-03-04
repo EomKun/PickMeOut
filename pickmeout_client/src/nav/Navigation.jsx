@@ -6,6 +6,11 @@ import LoginedMenu from "./LoginedMenu";
 import { mapStateToProps, mapDispatchToProps } from "../reduxCon";
 
 class Navigation extends Component{
+    componentDidMount = () => {
+        if(sessionStorage.getItem("login_email"))
+            this.props.logined();
+    }
+
     render (){
         let menu;
         switch(this.props.pageValue) {
