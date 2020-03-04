@@ -6,6 +6,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(45),
       allowNull: false
     },
+    category: {
+      type: DataTypes.STRING(45),
+      allowNull: false
+    },
     content: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -14,6 +18,11 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(11),
       allowNull: false,
       defaultValue: '0'
+    },
+    status: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+      defaultValue: 'register'
     },
     video_file: {
       type: DataTypes.STRING(100),

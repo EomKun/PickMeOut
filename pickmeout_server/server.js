@@ -29,7 +29,9 @@ app.use(session({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use("/user", require("./routes/user.js"));
+// router
+app.use("/user", require("./routes/user"));
+app.use("/post", require("./routes/post"));
 
 app.listen(8080, () => {
     console.log("Server Ready!");

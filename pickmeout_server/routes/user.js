@@ -57,6 +57,7 @@ router.post("/login", async (req, res, next) => {
             }
 
             req.session.u_id = search_result.id;
+            req.session.userinfo_id = search_result.userinfo_id;
             req.session.email = email;
             
             res.json({ resultCode: true, msg: `${email}님 환영합니다!` });

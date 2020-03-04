@@ -1,10 +1,42 @@
 import React, { Component } from "react";
 import { Container, Nav, Button, Table, Row, Modal, Form } from "react-bootstrap";
+import axios from "axios";
+
+axios.defaults.withCredentials = true;		// 같은 경로라고 설정하는 부분
+const headers = { withCredentials: true };
 
 class ApplyBoard extends Component {
     state = { modal_active: false };
 
+    // Modal state function
     ModalSwitch = (value) => { this.setState({ modal_active: value }); }
+
+    // post register request
+    PostRegister = async () => {
+        const formData = new FormData();
+        formData.append("headers", headers);
+        formData.append("title", this._post_title.value);
+        formData.append("category", this._post_category.value);
+        formData.append("content", this._post_content.value);
+        formData.append("video_upload", this._post_file.files[0]);
+
+        try {
+            const result = await axios.post("http://localhost:8080/post/register", formData)
+
+            alert(result.data.msg);
+            if(result.data.resultCode) {
+                this.ModalSwitch(false)    
+            } else { 
+                this._post_title.value = "";
+                this._post_category.value = "보컬";
+                this._post_content.value = "";
+                this._post_file.value = "";
+            }
+        }catch (err) {
+            // 에러 처리
+            console.log(err);
+        }
+    }
 
     render (){
         return (
@@ -65,12 +97,12 @@ class ApplyBoard extends Component {
                                 <Form.Control ref={ref=>this._post_content=ref} as="textarea" placeholder="글 내용" rows="5" />
                             </Form.Group>
                             <Form.Group>
-                            <Form.Control type="file" ref={ref=>this._post_file=ref} name="upload_file" placeholder="Upload" />
+                            <Form.Control type="file" ref={ref=>this._post_file=ref} placeholder="Upload" />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="primary" onClick={() => this.ModalSwitch(false)}>
+                        <Button variant="primary" onClick={this.PostRegister}>
                             등록
                         </Button>
                         <Button variant="secondary" onClick={() => this.ModalSwitch(false)}>
