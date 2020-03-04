@@ -11,6 +11,36 @@ class NotLoginedMenu extends Component{
     // Modal state function
     ModalSwitch = (value) => { this.setState({ modal_active: value }); }
 
+    // signup request
+    Signup = async () => {
+        try{
+            const send_param = {
+                headers,
+                email: this._signup_email.value,
+                password: this._signup_password.value,
+                nickname: this._signup_nickname.value,
+                intro: this._signup_intro.value
+            };
+        
+            const signup_result = await axios.post("http://localhost:8080/user/signup", send_param);
+            if(signup_result.data.resultCode) {
+                alert(signup_result.data.msg);
+        
+                this.ModalSwitch(false);
+            } else {
+                alert(signup_result.data.msg);
+        
+                this._signup_email.value = "";
+                this._signup_pw.value = "";
+                this._signup_nickname.value = "";
+                this._signup_intro.value = "";
+            }
+        } catch (err) {
+            // 에러 처리
+            console.log(err);
+        }
+    }
+
     // Login request
     Login = async () => {
         const send_param = {
@@ -22,11 +52,17 @@ class NotLoginedMenu extends Component{
         try {
             const login_result = await axios.post("http://localhost:8080/user/login", send_param);
 
-            // sessionStorage에 login_email을 key로 email 값을 넣어줌
-            sessionStorage.setItem("login_email", this._login_email.value);
-            
             alert(login_result.data.msg);
-            this.props.login();
+            if(login_result.data.resultCode){
+                 // sessionStorage에 login_email을 key로 email 값을 넣어줌
+                sessionStorage.setItem("login_email", this._login_email.value);
+
+                this.props.login();
+            } else {
+                this._login_email.value = "";
+                this._login_password.value = "";
+            }
+           
         } catch(err) {
             // 에러 처리
             console.log(err);
@@ -53,24 +89,24 @@ class NotLoginedMenu extends Component{
                     <Form>
                         <Form.Group>
                             <Form.Label>Email</Form.Label>
-                            <Form.Control type="email" placeholder="email" />
+                            <Form.Control type="email" ref={ref=>this._signup_email=ref} placeholder="email" />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Password</Form.Label>
-                            <Form.Control type="password" placeholder="password" />
+                            <Form.Control type="password" ref={ref=>this._signup_password=ref} placeholder="password" />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Nickname</Form.Label>
-                            <Form.Control type="text" placeholder="닉네임" />
+                            <Form.Control type="text"  ref={ref=>this._signup_nickname=ref} placeholder="닉네임" />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>소개글</Form.Label>
-                            <Form.Control as="textarea" rows="5" />
+                            <Form.Control as="textarea"  ref={ref=>this._signup_intro=ref} rows="5" />
                         </Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="primary" onClick={() => { this.ModalSwitch(false) }}>
+                    <Button variant="primary" onClick={this.Signup}>
                     가입
                     </Button>
                     <Button variant="secondary" onClick={() => { this.ModalSwitch(false) }}>
