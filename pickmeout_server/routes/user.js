@@ -2,8 +2,40 @@ const express = require("express");
 const router = express.Router();
 
 const models = require("../models");
-const Users = require('../models').Users;
-const UserInfo = require('../models').UserInfo;
+const Users = require("../models").Users;
+const UserInfo = require("../models").UserInfo;
+const Posts = require("../models").Posts;
+
+// userinfo process
+router.get("/userinfo", async (req, res, next) => {
+    try{
+        const userinfo_id = req.session.userinfo_id;
+
+        const userinfo_result = await UserInfo.findOne({ where : { id: userinfo_id }});
+
+        if(userinfo_result){
+            const post_result = await Posts.findAll({ 
+                where : { userId: req.session.u_id },
+                order: [[ "createdAt", "DESC" ]],
+            });
+
+            if(post_result){
+                res.json({ 
+                    resultCode: true,
+                    nickname: userinfo_result.nickname,
+                    intro: userinfo_result.intro,
+                    profile_file: userinfo_result.profile_file,
+                    posts: post_result,
+                });
+            }
+        } else {
+            res.json({ resultCode: false, msg: "유저 정보 찾기 실패" });
+        }
+    } catch (err) {
+        // 에러 처리
+        console.log(err);
+    }
+});
 
 // signup process
 router.post("/signup", async (req, res, next) => {
@@ -55,18 +87,25 @@ router.post("/login", async (req, res, next) => {
             if (search_result.password !== password){
                 res.json({ resultCode: false, msg: "비밀번호가 틀립니다" });
             }
-
+            // 2.닉네임 조회 
+			const nickname_result = await UserInfo.findOne({ 
+                where : { id: search_result.userinfo_id },
+                attributes: ['nickname']
+            });
+            
+            // 세션에 id, email, nickname 넣기
             req.session.u_id = search_result.id;
             req.session.userinfo_id = search_result.userinfo_id;
+        	req.session.nickname = nickname_result.nickname;
             req.session.email = email;
             
             res.json({ resultCode: true, msg: `${email}님 환영합니다!` });
         } else {
             res.json({ resultCode: false, msg: "이메일이 존재하지 않습니다" });
         }
-    } catch (err) {
+ } catch (err) {
         // 에러 처리
-        console.log(err);
+     console.log(err);
     }
 });
 

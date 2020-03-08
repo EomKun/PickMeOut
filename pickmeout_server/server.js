@@ -29,6 +29,10 @@ app.use(session({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// static
+app.use('/profile', express.static('profile_content'));
+app.use('/video', express.static('video_content'));
+
 // router
 app.use("/user", require("./routes/user"));
 app.use("/post", require("./routes/post"));

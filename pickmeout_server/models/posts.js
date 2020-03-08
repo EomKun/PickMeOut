@@ -14,6 +14,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    nickname: {
+      type: DataTypes.STRING(45),
+      allowNull: false
+    },
     favCnt: {
       type: DataTypes.INTEGER(11),
       allowNull: false,

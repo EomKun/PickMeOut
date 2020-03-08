@@ -32,11 +32,21 @@ class UserInfo extends Component {
 
     render (){
         let post_list = this.state.posts.map((post) => {
+            let status;
+            switch(post.status){
+                case "register": 
+                    status = <Badge variant="primary">구인 중</Badge>;
+                    break;
+
+                default:
+                    break;
+            }
+
             return (
                 <tr>
                     <td>{post.category}</td>
                     <td>{post.title}</td>
-                    <td><Badge variant="primary">구인 중</Badge></td>
+                    <td>{status}</td>
                     <td>{post.createdAt}</td>
                 </tr>
             );

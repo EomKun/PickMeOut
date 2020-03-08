@@ -21,8 +21,7 @@ db.Posts = require('./posts')(sequelize,Sequelize);
 db.UserInfo.hasOne(db.Users, { foreignKey: 'userinfo_id' });   
 
 // 1 : n
-db.Users.hasMany(db.Posts);
-db.UserInfo.hasMany(db.Posts);    
+db.Users.hasMany(db.Posts);  
 
 // n : m
 db.Users.belongsToMany(db.Posts, {

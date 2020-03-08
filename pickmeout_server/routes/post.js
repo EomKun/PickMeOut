@@ -28,23 +28,76 @@ const storage = multer.diskStorage({
 // multer 미들웨어 경로 등록
 const upload = multer({ storage });
 
+///////////////////////////////////////////////////////////////////////////////
+// process
+///////////////////////////////////////////////////////////////////////////////
+
+// Posts req process
+router.post("/", async (req, res, next) => {
+    try {
+        let result;
+
+        if(req.body.category === ""){
+            // 전체
+            result = await Posts.findAll({
+                order: [[ "createdAt", "DESC" ]],
+            });
+        }  else {
+            // 카테고리 별
+            result = await Posts.findAll({ 
+                where: { category: req.body.category },
+                order: [[ "createdAt", "DESC"]],
+            });
+        }
+        
+        res.json({ resultCode: true, posts: result });
+    } catch (err) {
+        // 에러 처리
+        console.log(err);
+        res.json({ resultCode: false, msg: "게시글을 불러오지 못했습니다" });
+    }
+});
+
+// popular post process
+router.get("/popularpost", async (req, res, next) => {
+    try{
+        // 일단은 가장 최근 게시물을 가져오도록 함
+        const result = await Posts.findOne({ order: [["createdAt", "DESC"]] });
+        res.json({ 
+            resultCode: true,
+            p_id: result.id,
+            title: result.title,
+            content: result.content,
+            category: result.category,
+            nickname: result.nickname,
+            createdAt: result.createdAt,
+            video_file: result.video_file,
+        });
+    } catch (err) {
+        // err 표시
+        console.log(err);
+        res.json({ resultCode: false, msg: "게시글이 없습니다" });
+    }
+});
+
 // post register
+// single안의 값은 formData의 key와 같아야 한다
 router.post("/register", upload.single("video_upload"), async (req, res) => {
     const title = req.body.title;
     const content = req.body.content;
     const category = req.body.category;
+    const nickname = req.session.nickname;
     const video_file = req.file.filename;	// 파일의 경로를 db에 넣을거임
     const userId = req.session.u_id;
-    const userinfoId = req.session.userinfo_id;
     
     try {
         const insert_result = await Posts.create({
             title,
             content,
             category,
+            nickname,
             video_file,
             userId,
-            userinfoId
         });
 
         res.json({ resultCode: true, msg: "글 등록이 완료되었습니다" });

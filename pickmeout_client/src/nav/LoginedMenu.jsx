@@ -8,7 +8,6 @@ class LoginedMenu extends Component{
         try {
             const logout_result = await axios.get("http://localhost:8080/user/logout");
             if(logout_result.data.resultCode) {
-                console.log(sessionStorage.getItem("login_email"));
                 sessionStorage.clear();
                 this.props.logout();
             }
