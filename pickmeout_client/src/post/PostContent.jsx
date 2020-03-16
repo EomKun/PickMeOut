@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Jumbotron, Col, Row, Button } from "react-bootstrap";
 
-class VideoContainer extends Component {
+class PostContent extends Component {
     render (){      
         return (
             <Jumbotron className="mt-5 mx-5">
@@ -23,4 +23,4 @@ class VideoContainer extends Component {
     }
 }
 
-export default VideoContainer;
+export default PostContent;

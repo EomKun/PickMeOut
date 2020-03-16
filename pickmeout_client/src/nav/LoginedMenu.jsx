@@ -6,7 +6,7 @@ class LoginedMenu extends Component{
     // logout request
     Logout = async () => {
         try {
-            const logout_result = await axios.get("http://localhost:8080/user/logout");
+            const logout_result = await axios.get(process.env.REACT_APP_REQ_ADDRESS + "user/logout");
             if(logout_result.data.resultCode) {
                 sessionStorage.clear();
                 this.props.logout();

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-class NotLoginContainer extends Component {
+class NotLoginPage extends Component {
     render (){
         const ImgStyle = { 
             backgroundImage: "url(/img/intro_band.jpg)",
@@ -16,4 +16,4 @@ class NotLoginContainer extends Component {
     }
 }
 
-export default NotLoginContainer;
+export default NotLoginPage;

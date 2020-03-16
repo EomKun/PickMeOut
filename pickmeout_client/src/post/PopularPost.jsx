@@ -4,7 +4,7 @@ import { DefaultPlayer as Video } from 'react-html5video';
 import 'react-html5video/dist/styles.css';
 import axios from "axios";
 
-class VideoContainer extends Component {
+class PopularPost extends Component {
     state = {
         title: "",
         content: "",
@@ -16,15 +16,15 @@ class VideoContainer extends Component {
 
 	// 게시글 정보에 대한 요청
     componentDidMount = async () => {
-        const post_result = await axios.get("http://localhost:8080/post/popularpost");
+        const post_result = await axios.get(process.env.REACT_APP_REQ_ADDRESS + "post/popularpost");
         if(post_result.data.resultCode) {
             this.setState({
                 title: post_result.data.title,
                 content: post_result.data.content,
                 category: post_result.data.category,
                 nickname: post_result.data.nickname,
-                video_link: "http://localhost:8080/video/" + post_result.data.video_file,
-                createdAt: post_result.data.createAt,
+                video_link: process.env.REACT_APP_REQ_ADDRESS + "video/" + post_result.data.video_file,
+                createdAt: post_result.data.createdAt,
             });
         } else {
             this.setState({
@@ -43,7 +43,7 @@ class VideoContainer extends Component {
                 <Row>
                     <Col>
                         {/* 비디오 재생되는 부분 */}
-                        <Video autoPlay loop
+                        <Video autoPlay loop muted
                             controls={['PlayPause', 'Seek', 'Time', 'Volume', 'Fullscreen']}
                             onCanPlayThrough={() => {
                                 // Do stuff
@@ -64,4 +64,4 @@ class VideoContainer extends Component {
     }
 }
 
-export default VideoContainer;
+export default PopularPost;

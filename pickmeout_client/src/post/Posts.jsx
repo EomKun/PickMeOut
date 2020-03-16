@@ -26,7 +26,7 @@ class Posts extends Component {
     // Posts request
     LoadPosts = async (category) => {
         try {
-            const post_result = await axios.post("http://localhost:8080/post", { category });
+            const post_result = await axios.post(process.env.REACT_APP_REQ_ADDRESS + "post", { category });
             if(post_result.data.resultCode) {
                 this.setState({    posts: post_result.data.posts,    });
             }
@@ -59,11 +59,12 @@ class Posts extends Component {
         formData.append("video_upload", this._post_file.files[0]);
 
         try {
-            const result = await axios.post("http://localhost:8080/post/register", formData)
+            const result = await axios.post(process.env.REACT_APP_REQ_ADDRESS + "post/register", formData);
 
             alert(result.data.msg);
             if(result.data.resultCode) {
-                this.RegisterModalSwitch(false)    
+                this.RegisterModalSwitch(false);
+                this.LoadPosts("");    
             } else { 
                 this._post_title.value = "";
                 this._post_category.value = "보컬";
@@ -104,7 +105,7 @@ class Posts extends Component {
                         );    	
                     });
 
-        let video_link = "http://localhost:8080/video/" + this.state.content.video_file;
+        let video_link = process.env.REACT_APP_REQ_ADDRESS + "video/" + this.state.content.video_file;
 
         return (
             <div>

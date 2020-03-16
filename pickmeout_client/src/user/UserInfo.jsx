@@ -13,12 +13,12 @@ class UserInfo extends Component {
     // 유저 정보 불러오기
     componentDidMount = async () => {
         try {
-            const result = await axios.get("http://localhost:8080/user/userinfo");
+            const result = await axios.get(process.env.REACT_APP_REQ_ADDRESS + "user/userinfo");
             if(result.data.resultCode) {
                 this.setState({
                     nickname: result.data.nickname,
                     intro: result.data.intro,
-                    profile_file: "http://localhost:8080/profile/" + result.data.profile_file,
+                    profile_file: process.env.REACT_APP_REQ_ADDRESS + "profile/" + result.data.profile_file,
                     posts: result.data.posts,
                 });
             } else {

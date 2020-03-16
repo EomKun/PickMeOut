@@ -22,7 +22,7 @@ class NotLoginedMenu extends Component{
                 intro: this._signup_intro.value
             };
         
-            const signup_result = await axios.post("http://localhost:8080/user/signup", send_param);
+            const signup_result = await axios.post(process.env.REACT_APP_REQ_ADDRESS + "user/signup", send_param);
             if(signup_result.data.resultCode) {
                 alert(signup_result.data.msg);
         
@@ -48,10 +48,9 @@ class NotLoginedMenu extends Component{
             email: this._login_email.value,
             password: this._login_password.value,
         };
-
+        
         try {
-            const login_result = await axios.post("http://localhost:8080/user/login", send_param);
-
+            const login_result = await axios.post(process.env.REACT_APP_REQ_ADDRESS + "user/login", send_param);
             alert(login_result.data.msg);
             if(login_result.data.resultCode){
                  // sessionStorage에 login_email을 key로 email 값을 넣어줌
