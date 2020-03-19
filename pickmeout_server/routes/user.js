@@ -39,6 +39,19 @@ router.get("/userinfo", async (req, res, next) => {
 
 // signup process
 router.post("/signup", async (req, res, next) => {
+    // email, password, nickname, intro 양식 검사
+    if(!(/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]+$/.test(req.body.email))){
+        res.json({ resultCode: false, msg: "맞지 않는 이메일 형식입니다" });
+    } 
+
+    if(!(/^[a-zA-Z0-9]{6,16}$/.test(req.body.password))){
+        res.json({ resultCode: false, msg: "비밀번호는 영문, 숫자 조합으로 6~16자리 입력" });
+    }
+
+    if(!(/^[a-zA-Z가-힣]{2, 10}$/.test(req.body.nickname))){
+        res.json({ resultCode: false, msg: "닉네임은 한글, 영문으로 2~10자"});
+    }
+
     const email = req.body.email;
     const password = req.body.password;
     const nickname = req.body.nickname;
@@ -48,7 +61,7 @@ router.post("/signup", async (req, res, next) => {
         // 이메일 중복 조회, Users table insert, UserInfo table insert
         await models.sequelize.transaction (async (t) => {
             // 1. 이메일 중복 조회
-            const search_result = await Users.findOne({ where : { email }});
+            const search_result = await Users.findOne({ where : { email }, attributes: [ "email" ]});
             if(!search_result)
             {
                 // 2. UserInfo table insert 
@@ -77,16 +90,26 @@ router.get("/logout", (req, res, next) => {
 
 // login process
 router.post("/login", async (req, res, next) => {
+    // email, password 양식 검사
+    if(!(/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]+$/.test(req.body.email))){
+        res.json({ resultCode: false, msg: "맞지 않는 이메일 형식입니다" });
+    } 
+
+    if(!(/^[a-zA-Z0-9]{6,16}$/.test(req.body.password))){
+        res.json({ resultCode: false, msg: "비밀번호는 영문, 숫자 조합으로 6~16자리 입력" });
+    } 
+
     const email = req.body.email;
     const password = req.body.password;
-
+    
     try {
         // 1. email을 조건으로 조회
-        const search_result = await Users.findOne({ where : { email }});
-        if(search_result){
-            if (search_result.password !== password){
-                res.json({ resultCode: false, msg: "비밀번호가 틀립니다" });
-            }
+        const search_result = await Users.findOne({ 
+            where : { email },
+            attributes: ["email", "password"] 
+        });
+
+        if(search_result && (search_result.password === password)){
             // 2.닉네임 조회 
 			const nickname_result = await UserInfo.findOne({ 
                 where : { id: search_result.userinfo_id },
@@ -101,7 +124,7 @@ router.post("/login", async (req, res, next) => {
             
             res.json({ resultCode: true, msg: `${email}님 환영합니다!` });
         } else {
-            res.json({ resultCode: false, msg: "이메일이 존재하지 않습니다" });
+            res.json({ resultCode: false, msg: "이메일이나 비밀번호가 맞지 않습니다" });
         }
  } catch (err) {
         // 에러 처리

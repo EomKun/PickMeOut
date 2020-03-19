@@ -3,3 +3,5 @@ video_content/
 profile_content/
 stageband_client/
 stageband_server/
+
+.env

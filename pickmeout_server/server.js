@@ -1,8 +1,12 @@
 const express = require("express");
 const session = require("express-session");
 const sequelize = require("./models").sequelize;
+const dotenv = require("dotenv");
 const cors = require("cors");
 const app = express();
+
+// env
+dotenv.config();
 
 // CORS option
 const corsOptions = {
@@ -37,6 +41,6 @@ app.use('/video', express.static('video_content'));
 app.use("/user", require("./routes/user"));
 app.use("/post", require("./routes/post"));
 
-app.listen(8080, () => {
+app.listen(8081, () => {
     console.log("Server Ready!");
 });
